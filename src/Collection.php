@@ -18,7 +18,7 @@ class Collection implements \Iterator, CollectionInterface
 
 	public function __construct(array $items = null)
     {
-        $this->items = $items;
+        $this->items = is_null($items) ? [] : $items;
     }
 
     /**

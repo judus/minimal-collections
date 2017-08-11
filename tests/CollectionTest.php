@@ -8,6 +8,11 @@ use PHPUnit\Framework\TestCase;
 
 class CollectionTest extends TestCase
 {
+    public function testConstruct()
+    {
+        $collection = new Collection(null);
+    }
+
     public function testAdd()
     {
         $collection = new Collection();
