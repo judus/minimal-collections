@@ -16,7 +16,7 @@ class Collection implements \Iterator, CollectionInterface
 	 */
 	private $items = array();
 
-	public function __construct(array $items = [])
+	public function __construct(array $items = null)
     {
         $this->items = $items;
     }
