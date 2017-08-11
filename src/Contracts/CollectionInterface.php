@@ -1,7 +1,7 @@
 <?php
 /**
  * CollectionInterface.php
- * 7/30/17 - 5:02 PM
+ * 8/11/17 - 11:18 AM
  *
  * PHP version 7
  *
@@ -36,8 +36,12 @@
 
 namespace Maduser\Minimal\Collections\Contracts;
 
+use Maduser\Minimal\Collections\Exceptions\InvalidKeyException;
+use Maduser\Minimal\Collections\Exceptions\KeyInUseException;
+
+
 /**
- * Interface CollectionInterface
+ * Class Collection
  *
  * @package Maduser\Minimal\Collections
  */
@@ -50,12 +54,14 @@ interface CollectionInterface
      * @param bool $overwrite
      *
      * @return CollectionInterface
+     * @throws InvalidKeyException
+     * @throws KeyInUseException
      */
     public function add(
         $obj,
         $key = null,
         $overwrite = false
-    ) : CollectionInterface;
+    ): CollectionInterface;
 
     /**
      * @param $key
@@ -82,13 +88,13 @@ interface CollectionInterface
     /**
      * @return bool
      */
-    public function hasItems() : bool;
+    public function hasItems(): bool;
 
     /**
      * @param string $name
      * @param null   $else
      *
-     * @return mixed
+     * @return mixed|null
      */
     public function exists(string $name, $else = null);
 
@@ -96,14 +102,14 @@ interface CollectionInterface
      * @param \Closure $closure
      * @param bool     $keepKeys
      *
-     * @return mixed
+     * @return Collection
      */
     public function filter(\Closure $closure, $keepKeys = false);
 
     /**
      * @param $key
      *
-     * @return mixed
+     * @return array
      */
     public function extract($key);
 
@@ -149,7 +155,7 @@ interface CollectionInterface
      *
      * @link  http://php.net/manual/en/iterator.valid.php
      * @return boolean The return value will be casted to boolean and then evaluated.
-     *        Returns true on success or false on failure.
+     * Returns true on success or false on failure.
      * @since 5.0.0
      */
     public function valid();
@@ -164,7 +170,12 @@ interface CollectionInterface
     public function rewind();
 
     /**
-     * @return mixed
+     * @return array
      */
     public function toArray();
+
+    /**
+     * @return string
+     */
+    public function __toString();
 }

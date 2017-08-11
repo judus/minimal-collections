@@ -16,6 +16,11 @@ class Collection implements \Iterator, CollectionInterface
 	 */
 	private $items = array();
 
+	public function __construct(array $items = [])
+    {
+        $this->items = $items;
+    }
+
     /**
      * @param      $obj
      * @param null $key
@@ -28,16 +33,14 @@ class Collection implements \Iterator, CollectionInterface
      */
 	public function add($obj, $key = null, $overwrite = false): CollectionInterface
 	{
-		if ($key == null) {
+        $this->validateKey($key);
+
+        if ($key == null) {
 			$this->items[] = $obj;
 		} else {
-			if (isset($this->items[$key]) && !$overwrite) {
-				throw new KeyInUseException("Collection key '".$key."' is already in use.", $this);
+            if (isset($this->items[$key]) && !$overwrite) {
+				throw new KeyInUseException("Collection key '".$key."' is already in use.");
 			} else {
-			    if (!is_string($key) || is_int($key)) {
-			        ! is_object($key) || $key = '(instance of) ' . get_class($key);
-                    throw new InvalidKeyException("Collection key '" . $key . "' is not a valid key name.");
-                }
 				$this->items[$key] = $obj;
 			}
 		}
@@ -52,12 +55,30 @@ class Collection implements \Iterator, CollectionInterface
      */
 	public function delete($key)
 	{
+	    $this->validateKey($key);
+
 		if (isset($this->items[$key])) {
 			unset($this->items[$key]);
 		} else {
-			throw new InvalidKeyException("Collection key '".$key."' does not exist.", $this);
+			throw new InvalidKeyException("Collection key '".$key."' does not exist.");
 		}
 	}
+
+	public function validateKey($key)
+    {
+        if (is_array($key)) {
+            throw new InvalidKeyException("Can not use array as key name.");
+        }
+
+        if (is_object($key)) {
+            throw new InvalidKeyException("Can not use object as key name.");
+        }
+
+        if (!is_null($key) && (!is_string($key) || is_int($key))) {
+            throw new InvalidKeyException("Collection key '" . $key . "' is not a valid key name.");
+        }
+
+    }
 
     /**
      * @param $key
@@ -70,8 +91,7 @@ class Collection implements \Iterator, CollectionInterface
 		if (isset($this->items[$key])) {
 			return $this->items[$key];
 		} else {
-			throw new InvalidKeyException("Collection key '" . $key . "' does not exist.",
-                $this);
+			throw new InvalidKeyException("Collection key '" . $key . "' does not exist.");
 		}
 	}
 
@@ -89,17 +109,32 @@ class Collection implements \Iterator, CollectionInterface
 		}
 	}
 
-	public function hasItems(): bool
+    /**
+     * @return bool
+     */
+    public function hasItems(): bool
     {
         return $this->count() > 0;
     }
 
+    /**
+     * @param string $name
+     * @param null   $else
+     *
+     * @return mixed|null
+     */
     public function exists(string $name, $else = null)
     {
         return isset($this->items[$name]) ?
             $this->items[$name] : $else;
     }
 
+    /**
+     * @param \Closure $closure
+     * @param bool     $keepKeys
+     *
+     * @return Collection
+     */
     public function filter(\Closure $closure, $keepKeys = false)
     {
         $collection = new Collection();
@@ -115,13 +150,20 @@ class Collection implements \Iterator, CollectionInterface
         return $collection;
     }
 
-	public function extract($key)
+    /**
+     * @param $key
+     *
+     * @return array
+     */
+    public function extract($key)
     {
         $extracted = [];
 
         foreach ($this->items as $item) {
             foreach (func_get_args() as $key) {
-                if (is_object($item)) {
+                if ($item instanceof CollectionInterface) {
+                    $extracted[] = $item->get($key);
+                } else if (is_object($item)) {
                     $extracted[] = $item->{$key};
                 } else {
                     $extracted[] = $item[$key];
@@ -132,6 +174,9 @@ class Collection implements \Iterator, CollectionInterface
         return $extracted;
     }
 
+    /**
+     * @return mixed
+     */
     public function first()
     {
         return reset($this->items);
@@ -202,31 +247,37 @@ class Collection implements \Iterator, CollectionInterface
         reset($this->items);
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         $items = [];
         foreach ($this->items as $key => $item) {
-            if ($item instanceof CollectionInterface) {
+            if (is_object($item) && method_exists($item, 'toArray')) {
                 $items[$key] = $item->toArray();
             } else {
-                $items[$key] = $item->toArray();
+                $items[$key] = $item;
             }
         }
 
         return $items;
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         $items = [];
-        foreach ($this->items as $item) {
-            if ($item instanceof $this) {
-                $items[] = $item->getArray();
+        foreach ($this->items as $key => $item) {
+            if ($item instanceof CollectionInterface) {
+                $items[$key] = $item->getArray();
             } else {
                 if (is_object($item) && method_exists($item, 'toArray')) {
-                    $items[] = $item->toArray();
+                    $items[$key] = $item->toArray();
                 } else {
-                    $items[] = $item;
+                    $items[$key] = $item;
                 }
             }
         }
