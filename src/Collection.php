@@ -9,7 +9,7 @@ use Maduser\Minimal\Collections\Exceptions\KeyInUseException;
  *
  * @package Maduser\Minimal\Collections
  */
-class Collection implements \Iterator, CollectionInterface
+class Collection implements \Iterator, \ArrayAccess, CollectionInterface
 {
 	/**
 	 * @var array
@@ -191,6 +191,46 @@ class Collection implements \Iterator, CollectionInterface
 	}
 
     /**
+     * @return array
+     */
+    public function toArray()
+    {
+        $items = [];
+        foreach ($this->items as $key => $item) {
+            if (is_object($item) && method_exists($item, 'toArray')) {
+                $items[$key] = $item->toArray();
+            } else {
+                $items[$key] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $items = [];
+        foreach ($this->items as $key => $item) {
+            if ($item instanceof CollectionInterface) {
+                $items[$key] = $item->getArray();
+            } else {
+                if (is_object($item) && method_exists($item, 'toArray')) {
+                    $items[$key] = $item->toArray();
+                } else {
+                    $items[$key] = $item;
+                }
+            }
+        }
+
+        return json_encode($items);
+    }
+
+    /* Iterator */
+
+    /**
      * Return the current element
      *
      * @link  http://php.net/manual/en/iterator.current.php
@@ -247,41 +287,74 @@ class Collection implements \Iterator, CollectionInterface
         reset($this->items);
     }
 
-    /**
-     * @return array
-     */
-    public function toArray()
-    {
-        $items = [];
-        foreach ($this->items as $key => $item) {
-            if (is_object($item) && method_exists($item, 'toArray')) {
-                $items[$key] = $item->toArray();
-            } else {
-                $items[$key] = $item;
-            }
-        }
+    /* ArrayAccess */
 
-        return $items;
+    /**
+     * Whether a offset exists
+     *
+     * @link  http://php.net/manual/en/arrayaccess.offsetexists.php
+     *
+     * @param mixed $offset An offset to check for.
+     *
+     * @return boolean true on success or false on failure.
+     * </p>
+     * <p>
+     * The return value will be casted to boolean if non-boolean was returned.
+     * @since 5.0.0
+     */
+    public function offsetExists($offset)
+    {
+        return isset($this->items[$offset]);
     }
 
     /**
-     * @return string
+     * Offset to retrieve
+     *
+     * @link  http://php.net/manual/en/arrayaccess.offsetget.php
+     *
+     * @param mixed $offset The offset to retrieve.
+     *
+     * @return mixed Can return all value types.
+     * @since 5.0.0
      */
-    public function __toString()
+    public function offsetGet($offset)
     {
-        $items = [];
-        foreach ($this->items as $key => $item) {
-            if ($item instanceof CollectionInterface) {
-                $items[$key] = $item->getArray();
-            } else {
-                if (is_object($item) && method_exists($item, 'toArray')) {
-                    $items[$key] = $item->toArray();
-                } else {
-                    $items[$key] = $item;
-                }
-            }
-        }
-
-        return json_encode($items);
+        return isset($this->items[$offset]) ? $this->items[$offset] : null;
     }
+
+    /**
+     * Offset to set
+     *
+     * @link  http://php.net/manual/en/arrayaccess.offsetset.php
+     *
+     * @param mixed $offset The offset to assign the value to.
+     * @param mixed $value  The value to set.
+     *
+     * @return void
+     * @since 5.0.0
+     */
+    public function offsetSet($offset, $value)
+    {
+        if (is_null($offset)) {
+            $this->items[] = $value;
+        } else {
+            $this->items[$offset] = $value;
+        }
+    }
+
+    /**
+     * Offset to unset
+     *
+     * @link  http://php.net/manual/en/arrayaccess.offsetunset.php
+     *
+     * @param mixed $offset The offset to unset.
+     *
+     * @return void
+     * @since 5.0.0
+     */
+    public function offsetUnset($offset)
+    {
+        unset($this->items[$offset]);
+    }
+
 }
