@@ -130,10 +130,29 @@ class Collection implements \Iterator, \ArrayAccess, CollectionInterface
     }
 
     /**
+     * @param $closure
+     *
+     * @return Collection
+     */
+    public function each($closure)
+    {
+        $container = new static();
+
+        $index = -1;
+        foreach ($this->items as $key => $item) {
+            $container->add($closure($key, $item, $index++), $key);
+        }
+
+        return $container;
+    }
+
+    /**
      * @param \Closure $closure
      * @param bool     $keepKeys
      *
      * @return Collection
+     * @throws InvalidKeyException
+     * @throws KeyInUseException
      */
     public function filter(\Closure $closure, $keepKeys = false)
     {
@@ -154,6 +173,7 @@ class Collection implements \Iterator, \ArrayAccess, CollectionInterface
      * @param $key
      *
      * @return array
+     * @throws InvalidKeyException
      */
     public function extract($key)
     {
