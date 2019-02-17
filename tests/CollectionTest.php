@@ -3,16 +3,12 @@
 namespace Maduser\Minimal\Collections\Tests;
 
 use Maduser\Minimal\Collections\Collection;
+use Maduser\Minimal\Collections\Exceptions\InvalidKeyException;
 use Maduser\Minimal\Collections\Exceptions\KeyInUseException;
 use PHPUnit\Framework\TestCase;
 
 class CollectionTest extends TestCase
 {
-    public function testConstruct()
-    {
-        $collection = new Collection(null);
-    }
-
     public function testAdd()
     {
         $collection = new Collection();
@@ -48,57 +44,57 @@ class CollectionTest extends TestCase
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\KeyInUseException
      */
     public function testAddThrowsKeyExists()
     {
+        $this->expectException(KeyInUseException::class);
         $collection = new Collection();
         $collection->add('dummy', 'test');
         $collection->add('dummy', 'test');
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testAddThrowsInvalidKeyWhenObject()
     {
+        $this->expectException(InvalidKeyException::class);
         $dummy = new \stdClass();
         $collection = new Collection();
         $collection->add('dummy', $dummy);
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testAddThrowsInvalidKeyWhenArray()
     {
+        $this->expectException(InvalidKeyException::class);
         $collection = new Collection();
         $collection->add('dummy', ['dummy']);
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testAddThrowsInvalidKeyWhenEmptyArray()
     {
+        $this->expectException(InvalidKeyException::class);
         $collection = new Collection();
         $collection->add('dummy', []);
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testValidateKeyWithArray()
     {
+        $this->expectException(InvalidKeyException::class);
         $collection = new Collection();
         $collection->validateKey([]);
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testValidateKeyWithObject()
     {
+        $this->expectException(InvalidKeyException::class);
         $collection = new Collection();
         $collection->validateKey(new \stdClass());
     }
@@ -130,10 +126,10 @@ class CollectionTest extends TestCase
     }
 
     /**
-     * @expectedException \Maduser\Minimal\Collections\Exceptions\InvalidKeyException
      */
     public function testGetThrowsInvalidKey()
     {
+        $this->expectException(InvalidKeyException::class);
         $collection = new Collection();
         $collection->add('dummy1', 'test1');
         $collection->add('dummy2', 'test2');
