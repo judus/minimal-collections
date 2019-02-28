@@ -39,20 +39,15 @@ namespace Maduser\Minimal\Collections\Contracts;
 use Maduser\Minimal\Collections\Exceptions\InvalidKeyException;
 use Maduser\Minimal\Collections\Exceptions\KeyInUseException;
 
+
 /**
  * Class Collection
  *
  * @package Maduser\Minimal\Collections
  */
-interface CollectionInterface extends AbstractCollectionInterface
+interface TypedCollectionInterface extends AbstractCollectionInterface
 {
-    public static function create(
-        array $items = null,
-        array $acceptedTypes = null
-    ): CollectionInterface;
+    public static function create(array $items = null): TypedCollectionInterface;
 
-    public function __construct(
-        array $items = null,
-        array $acceptedTypes = null
-    );
+    public function __construct(array $items = null);
 }
