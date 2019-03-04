@@ -62,6 +62,10 @@ interface AbstractCollectionInterface extends \ArrayAccess, \Iterator
      */
     public function validateType($value);
 
+    public function addItems(array $items): AbstractCollectionInterface;
+
+    public function setItems(array $items): AbstractCollectionInterface;
+
     /**
      * @param $value
      * @param $key

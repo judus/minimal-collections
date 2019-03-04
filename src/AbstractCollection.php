@@ -12,7 +12,7 @@ class AbstractCollection extends AbstractCollectionApi implements CollectionInte
 {
     /**
      * @param array|null $items
-     * @param array|null $acceptedTypes
+     * @param array|null $acceptedTypesF
      *
      * @return mixed
      */

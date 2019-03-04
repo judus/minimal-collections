@@ -62,6 +62,23 @@ class AbstractCollectionApi implements AbstractCollectionInterface
      */
     public function setItems(array $items): AbstractCollectionInterface
     {
+        $this->items = [];
+        $this->addItems($items);
+
+        return $this;
+    }
+
+    /**
+     * @param array $items
+     *
+     * @return AbstractCollectionInterface
+     * @throws InvalidKeyException
+     * @throws KeyInUseException
+     * @throws UnacceptableTypeException
+     * @throws \ReflectionException
+     */
+    public function addItems(array $items): AbstractCollectionInterface
+    {
         foreach ($items as $key => $value) {
             $this->add($value, $key);
         }
@@ -86,7 +103,7 @@ class AbstractCollectionApi implements AbstractCollectionInterface
         $key = null,
         $overwrite = false
     ): AbstractCollectionInterface {
-        $this->validateKey($key);
+        is_null($key) || $this->validateKey($key);
 
         if (count($this->getAcceptedTypes()) > 0) {
             $this->validateType($value);
@@ -138,7 +155,7 @@ class AbstractCollectionApi implements AbstractCollectionInterface
             throw new InvalidKeyException("Can not use object as key name.");
         }
 
-        if (!is_null($key) && (!is_string($key) || is_int($key))) {
+        if (!is_string($key) && !is_int($key)) {
             throw new InvalidKeyException("Collection key '" . $key . "' is not a valid key name.");
         }
     }
@@ -241,7 +258,7 @@ class AbstractCollectionApi implements AbstractCollectionInterface
         $container = new static();
 
         $index = -1;
-        foreach ($this->items as $key => $item) {
+        foreach ($this->items as $key => &$item) {
             $container->add($closure($key, $item, $index++), $key);
         }
 
@@ -258,15 +275,17 @@ class AbstractCollectionApi implements AbstractCollectionInterface
      * @throws UnacceptableTypeException
      * @throws \ReflectionException
      */
-    public function filter(\Closure $closure, $keepKeys = false): AbstractCollectionInterface
-    {
+    public function filter(
+        \Closure $closure,
+        $keepKeys = true
+    ): AbstractCollectionInterface {
         $class = get_called_class();
         $collection = new $class();
 
         $i = 0;
         foreach ($this->items as $key => $value) {
-            if (!$closure($value, $key, $i++)) {
-                $keepKeys || $key = null;
+            if ($closure($value, $key, $i++)) {
+                $keepKeys == true || $key = null;
                 $collection->add($value, $key);
             }
         }
@@ -274,7 +293,25 @@ class AbstractCollectionApi implements AbstractCollectionInterface
         return $collection;
     }
 
-    /**
+    public function split(\Closure $closure, $keepKeys = true): array {
+        $class = get_called_class();
+        $collection1 = new $class();
+        $collection2 = new $class();
+
+        $i = 0;
+        foreach ($this->items as $key => $item) {
+            if ($closure($item, $key, $i++)) {
+                $keepKeys == true || $key = null;
+                $collection1->add($item, $key);
+            } else {
+                $collection2->add($item, $key);
+            }
+        }
+
+        return [$collection1, $collection2];
+    }
+
+        /**
      * @param $key
      *
      * @return array
@@ -284,15 +321,15 @@ class AbstractCollectionApi implements AbstractCollectionInterface
     {
         $extracted = [];
 
-        foreach ($this->items as $item) {
+        foreach ($this->items as $k => $item) {
             foreach (func_get_args() as $key) {
                 if ($item instanceof AbstractCollectionInterface) {
-                    $extracted[] = $item->get($key);
+                    $extracted[$k] = $item->get($key);
                 } else {
                     if (is_object($item)) {
-                        $extracted[] = $item->{$key};
+                        $extracted[$k] = $item->{$key};
                     } else {
-                        $extracted[] = $item[$key];
+                        $extracted[$k] = $item[$key];
                     }
                 }
             }
@@ -341,7 +378,7 @@ class AbstractCollectionApi implements AbstractCollectionInterface
     {
         $items = [];
         foreach ($this->items as $key => $item) {
-            if ($item instanceof CollectionApiInterface) {
+            if ($item instanceof AbstractCollectionInterface) {
                 $items[$key] = $item->getArray();
             } else {
                 if (is_object($item) && method_exists($item, 'toArray')) {
